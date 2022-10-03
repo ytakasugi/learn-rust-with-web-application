@@ -16,9 +16,7 @@ async fn main() {
     env::set_var("RUST_LOG", log_level);
     tracing_subscriber::fmt::init();
 
-    let app = Router::new()
-        .route("/", get(root))
-        .route("/users", post(create_user));
+    let app = create_app();
     let addr = SocketAddr::from(([0, 0, 0, 0], 3000));
     
     tracing::debug!("listening on {}", addr);
@@ -29,13 +27,17 @@ async fn main() {
         .unwrap();
 }
 
-async fn root() -> &'static str {
-    "Hello World!"
+fn create_app() -> Router {
+    Router::new()
+        .route("/", get(root))
+        .route("/users", post(create_user))
 }
 
-async fn create_user(
-    Json(payload): Json<CreateUser>
-) -> impl IntoResponse {
+async fn root() -> &'static str {
+    "Hello, World!"
+}
+
+async fn create_user(Json(payload): Json<CreateUser>) -> impl IntoResponse {
     let user = User {
         id: 1337,
         username: payload.username,
@@ -53,4 +55,29 @@ struct CreateUser {
 struct User {
     id: u64,
     username: String,
+}
+
+// test
+#[cfg(test)]
+mod test {
+    use super::*;
+    use axum::{
+        body::Body,
+        http::{
+            //header,
+            //Method,
+            Request
+        }
+    };
+    use tower::ServiceExt;
+
+    #[tokio::test]
+    async fn should_return_hello_world() {
+        let req = Request::builder().uri("/").body(Body::empty()).unwrap();
+        let res = create_app().oneshot(req).await.unwrap();
+        let bytes = hyper::body::to_bytes(res.into_body()).await.unwrap();
+        let body: String = String::from_utf8(bytes.to_vec()).unwrap();
+
+        assert_eq!(body, "Hello, World!");
+    }
 }
