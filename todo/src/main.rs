@@ -46,12 +46,12 @@ async fn create_user(Json(payload): Json<CreateUser>) -> impl IntoResponse {
     (StatusCode::CREATED, Json(user))
 }
 
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
 struct CreateUser {
     username: String,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
 struct User {
     id: u64,
     username: String,
@@ -64,8 +64,8 @@ mod test {
     use axum::{
         body::Body,
         http::{
-            //header,
-            //Method,
+            header,
+            Method,
             Request
         }
     };
@@ -79,5 +79,27 @@ mod test {
         let body: String = String::from_utf8(bytes.to_vec()).unwrap();
 
         assert_eq!(body, "Hello, World!");
+    }
+
+    #[tokio::test]
+    async fn should_return_user_data() {
+        let req = Request::builder()
+            .uri("/users")
+            .method(Method::POST)
+            .header(header::CONTENT_TYPE, mime::APPLICATION_JSON.as_ref())
+            .body(Body::from(r#"{ "username": "Alice" }"#))
+            .unwrap();
+        let res = create_app().oneshot(req).await.unwrap();
+        let bytes = hyper::body::to_bytes(res.into_body()).await.unwrap();
+        let body: String = String::from_utf8(bytes.to_vec()).unwrap();
+        let user: User = serde_json::from_str(&body).expect("cannot conver User instance.");
+
+        assert_eq!(
+            user,
+            User {
+                id: 1337,
+                username: "Alice".to_string()
+            }
+        );
     }
 }
