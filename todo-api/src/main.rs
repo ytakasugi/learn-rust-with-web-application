@@ -1,5 +1,5 @@
-pub mod repositories;
-pub mod handlers;
+mod repositories;
+mod handlers;
 
 use axum::{
     extract::Extension,
