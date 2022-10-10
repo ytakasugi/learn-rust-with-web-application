@@ -1,0 +1,8 @@
+UPDATE
+    TODOS
+SET
+    TEXT = $1
+    , COMPLETED = $2
+WHERE
+    ID = $3
+RETURNING *
