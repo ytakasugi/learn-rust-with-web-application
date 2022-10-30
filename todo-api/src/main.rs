@@ -25,11 +25,7 @@ async fn main() {
     tracing_subscriber::fmt::init();
 
     let pool = database::init().await;
-    //let database_url = &env::var("DATABASE_URL").expect("undefined [DATABASE_URL]");
     tracing::debug!("start connect database...");
-    //let pool = PgPool::connect(database_url)
-    //    .await
-    //    .unwrap_or_else(|_| panic!("fail connect database, url is [{}]", database_url));
 
     let repository = TodoRepositoryForDb::new(pool.clone());
     let app = create_app(repository);
